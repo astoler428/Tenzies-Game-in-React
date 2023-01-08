@@ -7,17 +7,41 @@ import Confetti from "react-confetti";
 export default function App() {
   const [dice, setDice] = React.useState(allNewDice());
   const [tenzies, setTenzies] = React.useState(false);
+  const [rolls, setRolls] = React.useState(0);
+  const [records, setRecords] = React.useState(getRecords());
 
-  useEffect(checkWin, [dice]);
+  let start = React.useRef(0);
+  let end = React.useRef(0);
 
-  function checkWin() {
+  //checks for win condition
+
+  useEffect(() => {
     let firstValue = dice[0].value;
     let youWin = true;
     for (let die of dice) {
       if (!die.isHeld || die.value !== firstValue) youWin = false;
     }
-    if (youWin) setTenzies(true);
-  }
+    if (youWin) {
+      end.current = Date.now();
+      let time = (end.current - start.current) / 1000.0;
+      setTenzies(true);
+
+      if (
+        localStorage.getItem("minRolls") === null ||
+        rolls < localStorage.getItem("minRolls")
+      ) {
+        localStorage.setItem("minRolls", rolls);
+        setRecords(getRecords());
+      }
+      if (
+        localStorage.getItem("minTime") === null ||
+        time < localStorage.getItem("minTime")
+      ) {
+        localStorage.setItem("minTime", time);
+        setRecords(getRecords());
+      }
+    }
+  }, [dice]);
 
   function allNewDice() {
     let newDice = [];
@@ -37,7 +61,10 @@ export default function App() {
     if (tenzies) {
       setTenzies(false);
       setDice(allNewDice());
+      setRolls(0);
     } else {
+      if (rolls === 0) start.current = Date.now();
+      setRolls((oldRolls) => oldRolls + 1);
       setDice((oldDice) =>
         oldDice.map((die) => {
           return die.isHeld ? die : newDie();
@@ -54,6 +81,19 @@ export default function App() {
         })
       );
     }
+  }
+
+  function resetRecords() {
+    localStorage.removeItem("minRolls");
+    localStorage.removeItem("minTime");
+    setRecords(getRecords());
+  }
+
+  function getRecords() {
+    return {
+      minRolls: localStorage.getItem("minRolls"),
+      minTime: localStorage.getItem("minTime"),
+    };
   }
 
   let diceElements = dice.map((die) => (
@@ -77,6 +117,35 @@ export default function App() {
       <button onClick={rollDice} className="roll-btn">
         {tenzies === true ? "New Game" : "Roll"}
       </button>
+      <div className="num-rolls">Number of Rolls: {rolls}</div>
+
+      {tenzies && (
+        <div className="time">
+          Time to Win: {(end.current - start.current) / 1000.0 + " secs"}
+        </div>
+      )}
+      <div className="records">
+        <div>
+          Fewest Rolls:{" "}
+          <div className="record-value">
+            {records.minRolls !== null && records.minRolls}
+          </div>
+        </div>
+        <div>
+          Shortest Time:{" "}
+          <div className="record-value">
+            {" "}
+            {records.minTime !== null && records.minTime}
+          </div>
+        </div>
+      </div>
+      <button onClick={resetRecords} className="reset-records-btn">
+        Reset Records
+      </button>
     </main>
   );
 }
+
+// figure out how to display a subtraction between two values
+// as well as useRef for mutable value of start and end?
+//do regular variables stay constant throughout life cycle?
