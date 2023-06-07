@@ -5,16 +5,22 @@ import { nanoid } from "nanoid";
 import Confetti from "react-confetti";
 
 export default function App() {
+  //dice is an array of 10 objects containing die value, isHeld boolean and an id
   const [dice, setDice] = React.useState(allNewDice());
+  //holds the status of the game
   const [tenzies, setTenzies] = React.useState(false);
+  //custom feature - holds the number of rolls
   const [rolls, setRolls] = React.useState(0);
+  //custom feature - holds the records in local storage
   const [records, setRecords] = React.useState(getRecords());
 
+  //variables that will store the start and end date of the game
+  //start is determined when dice is rolled
   let start = React.useRef(0);
+  //end is determined when you win
   let end = React.useRef(0);
 
-  //checks for win condition
-
+  //checks for win condition every time dice change
   useEffect(() => {
     let firstValue = dice[0].value;
     let youWin = true;
@@ -25,7 +31,6 @@ export default function App() {
       end.current = Date.now();
       let time = (end.current - start.current) / 1000.0;
       setTenzies(true);
-
       if (
         localStorage.getItem("minRolls") === null ||
         rolls < localStorage.getItem("minRolls")
@@ -145,7 +150,3 @@ export default function App() {
     </main>
   );
 }
-
-// figure out how to display a subtraction between two values
-// as well as useRef for mutable value of start and end?
-//do regular variables stay constant throughout life cycle?
